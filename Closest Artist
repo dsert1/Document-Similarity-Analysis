@@ -1,0 +1,68 @@
+def find_closest_artist(artist_to_songfiles, mystery_lyrics, bigrams = False):
+    """
+    Args:
+        artist_to_songfiles: 
+            dictionary that maps string:list of strings 
+            where each string key is an artist name
+            and the corresponding list is a list of filenames (including the extension),
+            each holding lyrics to a song by that artist
+        mystery_lyrics: string of lyrics 
+            Can be more than one or two words (can also be an empty string)
+            assume the string is made of lowercase characters
+        bigrams: boolean, optional parameter. Default set to False.
+            If it is True, bigrams of text in files 
+            and bigrams of mystery_lyrics should be used in analysis.
+    Returns:
+        list of artists (in alphabetical order) that best match the mystery lyrics
+    The best match is defined as the artist(s) whose songs have the highest average
+    similarity score with the mystery lyrics. If there is only one such artist, then
+    this function should return a singleton list containing only that artist. However,
+    if all artists have an average similarity score of zero with respect to the
+    mystery_lyrics, then this function should return an empty list. When no artists 
+    are included in the artist_to_songfiles, this function returns an empty list.
+    """
+    #prepping data
+    new_dict_artists = {}
+    new_dict_mystery = {}
+    l = []
+    dict_avg = {}
+
+    #for e in artist_to_songfiles:
+    if len(artist_to_songfiles) == 0:
+        return []
+
+    if bigrams:
+        mystery_freq = get_frequencies(find_bigrams(prep_data(mystery_lyrics)))
+    else:
+        mystery_freq = get_frequencies(prep_data(mystery_lyrics))
+
+
+
+    for artists in artist_to_songfiles.keys():
+        tot_sim = 0
+
+
+        for songs in artist_to_songfiles[artists]:
+            l1 = prep_data(load_file(songs))
+
+            #checks to see if there are bigrams
+            if bigrams:
+                dict_a = get_frequencies(find_bigrams(l1))
+                tot_sim = calculate_similarity_score(dict_a, mystery_freq)
+            #no bigram, continue like normal
+            else:
+                dict_a = get_frequencies(l1)
+                tot_sim = calculate_similarity_score(dict_a, mystery_freq)
+
+        avg_sim = tot_sim / len(artist_to_songfiles[artists])
+        dict_avg[artists] = avg_sim
+
+    #determine the largest avg similarity score
+    max_avg = max(dict_avg.values())
+    if max_avg < 1e-9:
+        return []
+    for a in dict_avg:
+        if abs(max_avg - dict_avg[a]) < 1e-9:
+            l.append(a)
+    #return list of highest frequency score artists
+    return l
